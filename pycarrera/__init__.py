@@ -1,14 +1,18 @@
 import serial
+import struct
 
 END_OF_TRANSMISSION_CHARACTER = '$'
 COMMAND_PREFIX = '"'
 CONTROL_UNIT_BAUD_RATE = 19200
 MAXIMUM_RESPONSE_LENGTH_IN_BYTES = 16
+LAP_IN_PROGRESS_CHARACTER = ':'
 RESPONSE_READ_TIMEOUT_IN_SECONDS = 1
 UNKNOWN_COMMAND_CHARACTER = '#'
 
 GET_VERSION_COMMAND = '0'
+GET_RACE_STATUS_COMMAND = '?'
 START_RACE_COMMAND = "="
+
 
 class CommunicationException(Exception):
     pass
@@ -33,10 +37,9 @@ class ControlUnitClient(object):
         response = self._read_until_EOT()
 
         if response:
-            # The first character of the response is the issued command repeated back
             repeated_command = response.pop(0)
 
-            if not repeated_command == command:
+            if not chr(repeated_command) == command:
                 raise CommunicationException("Unrecognized command %s" % repeated_command)
 
             checksum = response.pop()
@@ -50,6 +53,18 @@ class ControlUnitClient(object):
         response = self.send_command(GET_VERSION_COMMAND)
         return str(response)
 
+    @property
+    def race_status(self):
+        response = self.send_command(GET_RACE_STATUS_COMMAND)
+
+        if chr(response[0]) == LAP_IN_PROGRESS_INDICATOR:
+	    return None
+
+	car_number = response[0]
+	finish_line_crossing_timestamp = response[1:8]
+        sensor_group = response[9]
+
+        return str(response)
 
     def _read_until_EOT(self):
         """Carrera Control Unit responses are terminated with a '$' character.
