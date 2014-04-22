@@ -27,7 +27,7 @@ class ControlUnitClient(object):
         self.serial_port.open()
 
     def send_command(self, command):
-        command_string = self.COMMAND_PREFIX + command
+        command_string = COMMAND_PREFIX + command
         self.serial_port.write(command_string)
         self.serial_port.flush()
         response = self._read_until_EOT()
