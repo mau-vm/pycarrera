@@ -30,14 +30,37 @@ class RaceMonitor(object):
 		fuel_level = response[car_number]
 
 		if fuel_level == ord('?'):
-	            fuel_level = 'UNKNOWN'
+	            fuel_level = 'unknown'
 
                 self.race_status_info[car_number]['fuel_level'] = fuel_level
 
             mystery_levels = response[7:8]
-            self.race_status_info['start_count'] = chr(response[9])
 
-            fuel_tank_mode = chr(response[10])
+            race_state = int(chr(response[9]))
+            
+            if race_state == 0:
+                self.race_status_info['race_state'] = 'running'
+            elif race_state == 1:
+                self.race_status_info['race_state'] = 'ready'
+            elif race_state == 9:
+                self.race_status_info['race_state'] = 'false_start'
+	    else:
+                self.race_status_info['race_state'] = start_count
+
+
+
+            fuel_tank_mode = response[10]
+	    
+            if fuel_tank_mode == ord('0'):
+                fuel_tank_mode = 'off'
+            elif fuel_tank_mode == ord('1'):
+                fuel_tank_mode = 'normal'
+            elif fuel_tank_mode == ord('2'):
+                fuel_tank_mode = 'real'
+            else:
+                fuel_tank_mode = 'unknown'
+
+
             self.race_status_info['fuel_tank_mode'] = fuel_tank_mode
 
             refuel_bitmask = response[11:12]
@@ -45,20 +68,23 @@ class RaceMonitor(object):
             self.race_status_info['position_tower_type'] = chr(response[13])
 
         else:
-            car_number = response[0]
-            last_crossed_timestamp = response[1:8]
+            car_number = int(chr(response[0]))
+            last_crossed_tuple = struct.unpack_from('I', str(response[1:8]))
+            last_crossed_timestamp = last_crossed_tuple[0]
+
             sensor_group = response[9]
 
             if not car_number in self.race_status_info:
                 self.race_status_info[car_number] = {}
-                self.race_status_info[car_number]['splits'] = []
 
-            race_info = self.race_status_info[car_number]
+            car_info = self.race_status_info[car_number]
 
-            if race_info['splits']:
-                race_info['last_laptime_in_millis'] = last_crossed_timestamp - race_info['splits'][-1]
+            if not 'splits' in car_info:
+                car_info['splits'] = []
 
-            self.race_status_info[car_number]['splits'].append(last_crossed_timestamp)
+	    if not last_crossed_timestamp in car_info['splits']:
+                if self.race_status_info[car_number]['splits']:
+                    self.race_status_info[car_number]['last_laptime'] = last_crossed_timestamp - self.race_status_info[car_number]['splits'][-1] 
+                self.race_status_info[car_number]['splits'].append(last_crossed_timestamp)
 
-	print response
         return self.race_status_info
