@@ -24,18 +24,25 @@ class RaceMonitor(object):
 
         if chr(response[0]) == LAP_IN_PROGRESS_INDICATOR:
             for car_number in range(1, 7):
-                self.race_status_info[car_number]['fuel_level'] = response[car_number]
+		if car_number not in self.race_status_info:
+		    self.race_status_info[car_number] = {}
+
+		fuel_level = response[car_number]
+
+		if fuel_level == ord('?'):
+	            fuel_level = 'UNKNOWN'
+
+                self.race_status_info[car_number]['fuel_level'] = fuel_level
 
             mystery_levels = response[7:8]
-            start_status = response[9]
-            self.race_status_info['start_count'] = response[9]
+            self.race_status_info['start_count'] = chr(response[9])
 
-            fuel_tank_mode = response[10]
+            fuel_tank_mode = chr(response[10])
             self.race_status_info['fuel_tank_mode'] = fuel_tank_mode
 
             refuel_bitmask = response[11:12]
 
-            self.race_status_info['position_tower_type'] = response[13]
+            self.race_status_info['position_tower_type'] = chr(response[13])
 
         else:
             car_number = response[0]
@@ -53,4 +60,5 @@ class RaceMonitor(object):
 
             self.race_status_info[car_number]['splits'].append(last_crossed_timestamp)
 
-        return None
+	print response
+        return self.race_status_info

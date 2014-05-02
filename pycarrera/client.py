@@ -22,7 +22,7 @@ class ControlUnitClient(object):
     def __init__(self, serial_port_name):
         self.serial_port_name = serial_port_name
         self.serial_port = None
-        self.race_status = {}
+	self.connect()
 
     def connect(self):
         self.serial_port = serial.Serial()
