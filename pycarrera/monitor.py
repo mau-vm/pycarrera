@@ -21,53 +21,56 @@ class RaceMonitor(object):
         - A 'finish line' status, where the last car to cross the finish line's number and time is returned.
         - A 'lap in progress' status (preceded by a ':' character), which gives the fuel levels for each car."""
         response = self.client.race_status
+        first_response_character = chr(response[0])
 
-        if chr(response[0]) == LAP_IN_PROGRESS_INDICATOR:
+        if first_response_character == LAP_IN_PROGRESS_INDICATOR:
+
             for car_number in range(1, 7):
-		if car_number not in self.race_status_info:
-		    self.race_status_info[car_number] = {}
+                if car_number not in self.race_status_info:
+                    self.race_status_info[car_number] = {}
 
-		fuel_level = response[car_number]
 
-		if fuel_level == ord('?'):
-	            fuel_level = 'unknown'
+                fuel_level = response[car_number]
+
+                if fuel_level == ord('?'):
+                    fuel_level = 'unknown'
 
                 self.race_status_info[car_number]['fuel_level'] = fuel_level
 
             mystery_levels = response[7:8]
 
             race_state = int(chr(response[9]))
-            
+
             if race_state == 0:
                 self.race_status_info['race_state'] = 'running'
             elif race_state == 1:
                 self.race_status_info['race_state'] = 'ready'
             elif race_state == 9:
                 self.race_status_info['race_state'] = 'false_start'
-	    else:
-                self.race_status_info['race_state'] = start_count
+            else:
+                self.race_status_info['race_state'] = race_state
 
 
+            fuel_tank_mode = int(chr(response[10]))
 
-            fuel_tank_mode = response[10]
-	    
-            if fuel_tank_mode == ord('0'):
+            if fuel_tank_mode == 0:
                 fuel_tank_mode = 'off'
-            elif fuel_tank_mode == ord('1'):
+            elif fuel_tank_mode == 1:
                 fuel_tank_mode = 'normal'
-            elif fuel_tank_mode == ord('2'):
+            elif fuel_tank_mode == 2:
                 fuel_tank_mode = 'real'
             else:
                 fuel_tank_mode = 'unknown'
 
-
             self.race_status_info['fuel_tank_mode'] = fuel_tank_mode
+
 
             refuel_bitmask = response[11:12]
 
             self.race_status_info['position_tower_type'] = chr(response[13])
 
         else:
+            # Car position update
             car_number = int(chr(response[0]))
             last_crossed_tuple = struct.unpack_from('I', str(response[1:8]))
             last_crossed_timestamp = last_crossed_tuple[0]
@@ -82,9 +85,9 @@ class RaceMonitor(object):
             if not 'splits' in car_info:
                 car_info['splits'] = []
 
-	    if not last_crossed_timestamp in car_info['splits']:
+            if not last_crossed_timestamp in car_info['splits']:
                 if self.race_status_info[car_number]['splits']:
-                    self.race_status_info[car_number]['last_laptime'] = last_crossed_timestamp - self.race_status_info[car_number]['splits'][-1] 
-                self.race_status_info[car_number]['splits'].append(last_crossed_timestamp)
+                    car_info['last_laptime'] = last_crossed_timestamp - car_info['splits'][-1]
+                car_info['splits'].append(last_crossed_timestamp)
 
         return self.race_status_info
