@@ -1,0 +1,13 @@
+50010<0:61
+root@pi:/home/pi/pycarrera# python test.py
+10010:1=61
+root@pi:/home/pi/pycarrera# python test.py
+50010<0:61
+root@pi:/home/pi/pycarrera# python test.py
+10010:1=61
+root@pi:/home/pi/pycarrera# python test.py
+50010<0:61
+root@pi:/home/pi/pycarrera# python test.py
+:??????0000008
+root@pi:/home/pi/pycarrera# python test.py
+:??????0000008
